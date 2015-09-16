@@ -13,6 +13,7 @@ import static redis.clients.jedis.Protocol.Keyword.RESET;
 import static redis.clients.jedis.Protocol.Keyword.STORE;
 import static redis.clients.jedis.Protocol.Keyword.WITHSCORES;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,10 @@ public class BinaryClient extends Connection {
 
     public BinaryClient(final String host, final int port, boolean ssl) {
 	super(host, port, ssl);
+    }
+    
+    public BinaryClient(final String host, final int port, boolean ssl, File clientCertFile, String clientCertPass) {
+    	super(host, port, ssl, clientCertFile, clientCertPass);
     }
 
     private byte[][] joinParameters(byte[] first, byte[][] rest) {

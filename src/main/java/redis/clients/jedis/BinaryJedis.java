@@ -3,6 +3,7 @@ package redis.clients.jedis;
 import static redis.clients.jedis.Protocol.toByteArray;
 
 import java.io.Closeable;
+import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,22 +25,26 @@ public class BinaryJedis implements BasicCommands, BinaryJedisCommands,
     protected Client client = null;
 
     public BinaryJedis(final String host) {
-	URI uri = URI.create(host);
-	if (uri.getScheme() != null && (uri.getScheme().equals("redis") || uri.getScheme().equals("rediss"))) {
-	    client = new Client(uri.getHost(), uri.getPort(), uri.getScheme().equals("rediss"));
-	    if(uri.getUserInfo()!=null)
-	    {
-	    	client.auth(uri.getUserInfo().split(":", 2)[1]);
-	    	client.getStatusCodeReply();
-	    }
-	    if(uri.getPath().length()>0)
-	    {
-	    	client.select(Integer.parseInt(uri.getPath().split("/", 2)[1]));
-	    	client.getStatusCodeReply();
-	    }
-	} else {
-	    client = new Client(host);
-	}
+    	this(host, null, null);
+    }
+    
+    public BinaryJedis(final String host, final File clientCert, final String clientCertPassword) {
+    	URI uri = URI.create(host);
+    	if (uri.getScheme() != null && (uri.getScheme().equals("redis") || uri.getScheme().equals("rediss"))) {
+    	    client = new Client(uri.getHost(), uri.getPort(), uri.getScheme().equals("rediss"), clientCert, clientCertPassword);
+    	    if(uri.getUserInfo()!=null)
+    	    {
+    	    	client.auth(uri.getUserInfo().split(":", 2)[1]);
+    	    	client.getStatusCodeReply();
+    	    }
+    	    if(uri.getPath().length()>0)
+    	    {
+    	    	client.select(Integer.parseInt(uri.getPath().split("/", 2)[1]));
+    	    	client.getStatusCodeReply();
+    	    }
+    	} else {
+    	    client = new Client(host);
+    	}
     }
 
     public BinaryJedis(final String host, final int port) {

@@ -1,5 +1,6 @@
 package redis.clients.jedis;
 
+import java.io.File;
 import java.net.URI;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -28,6 +29,16 @@ public class Jedis extends BinaryJedis implements JedisCommands,
 
     public Jedis(final String host, final int port, boolean ssl) {
 	super(host, port, ssl);
+    }
+    /**
+     * Use this constructor to pass in client certificate file in PKCS12 format.
+     * 
+     * @param host String url in form <protocol>://<host>:<port> where protocol should be rediss to initiate SSL connection
+     * @param clientCertFile File File that contains client certificat that server expects. Pass null here if your server does not expect client certificate
+     * @param clientCertPass String password for the client certificate file. Pass null if you are not using client certificate
+     */
+    public Jedis(final String host, final File clientCertFile, String clientCertPass) {
+    	super(host, clientCertFile, clientCertPass);
     }
 
     public Jedis(final String host, final int port, final int timeout) {

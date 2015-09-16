@@ -1,13 +1,20 @@
 package redis.clients.jedis;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.security.KeyStore;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -20,6 +27,9 @@ import redis.clients.util.RedisOutputStream;
 import redis.clients.util.SafeEncoder;
 
 public class Connection implements Closeable {
+	
+	private File clientCertFile;	
+	private String pKeyPassword;
     private boolean ssl;
     private String host;
     private int port = Protocol.DEFAULT_PORT;
@@ -109,6 +119,15 @@ public class Connection implements Closeable {
 	this.port = port;
 	this.ssl = ssl;
     }
+    
+    public Connection(final String host, final int port, boolean ssl, File clientCertFile, String clientCertPass) {
+    	super();
+    	this.host = host;
+    	this.port = port;
+    	this.ssl = ssl;
+    	this.clientCertFile = clientCertFile;
+    	this.pKeyPassword = clientCertPass;
+    }
 
     public String getHost() {
 	return host;
@@ -158,7 +177,24 @@ public class Connection implements Closeable {
 
 		if(ssl)
 		{
-			SSLSocketFactory sslsocketfactory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+			SSLSocketFactory sslsocketfactory = null;
+			if(clientCertFile == null){
+				sslsocketfactory = (SSLSocketFactory)SSLSocketFactory.getDefault();
+			} else {
+				try {
+					KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+					KeyStore keyStore = KeyStore.getInstance("PKCS12");
+					InputStream keyInput = new FileInputStream(clientCertFile);
+					keyStore.load(keyInput, pKeyPassword.toCharArray());
+					keyInput.close();
+					keyManagerFactory.init(keyStore, pKeyPassword.toCharArray());
+					SSLContext context = SSLContext.getInstance("TLS");
+					context.init(keyManagerFactory.getKeyManagers(), null, new SecureRandom());
+					sslsocketfactory = context.getSocketFactory();
+				} catch (Exception e){
+					throw new JedisException("unable to create SSL connection with client certificate", e);
+				}
+			}
 			socket = (SSLSocket) sslsocketfactory.createSocket(socket, host, port, true);
 		}
 		
